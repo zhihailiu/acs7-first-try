@@ -1,0 +1,1 @@
+Place custom, third party jars here. They are deployed to $TOMCAT_DIR/webapps/alfresco/WEB-INF/lib/ according to Dockerfile.

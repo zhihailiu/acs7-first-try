@@ -1,14 +1,18 @@
-# Alfresco ACS JAR Module - SDK 4.2
+# Alfresco ACS7 with SDK 4.2
 
-This is an ACS project for Alfresco SDK 4.2.
+This is an ACS7 project for Alfresco SDK 4.2.
+
+Review/update docker-compose.yml first.
 
 Run with `./run.sh build_start` or `./run.bat build_start` and verify that it
 
  * Runs Alfresco Content Service (ACS)
- * (Optional) Runs Alfresco Share
- * Runs Alfresco Search Service (ASS)
  * Runs PostgreSQL database
- * Deploys the JAR assembled module
+ * Runs ActiveMQ
+ * Runs File Share Store
+ * Runs custom event handler
+ * Runs custom T-Engine
+ * Deploys the JAR assembled module, and any other jars placed in src/main/docker/extensions
  
 All the services of the project are now run as docker containers. The run script offers the next tasks:
 
