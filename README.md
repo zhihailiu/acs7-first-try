@@ -1,6 +1,6 @@
 # Alfresco ACS7 with SDK 4.2
 
-This is an ACS7 project for Alfresco SDK 4.2.
+This is an ACS7 project for Alfresco SDK 4.2. This can run and test a stacks of docker containers for ACS7 with custom module/third party jars, custom event hander and T-Engine. 
 
 Review/update docker-compose.yml first.
 
