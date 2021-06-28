@@ -13,16 +13,24 @@ services:
     build:
       dockerfile: ./Dockerfile
       context: ../../../target
-    environment:
+    environment:    
       JAVA_TOOL_OPTIONS: "${keystore.settings}"
       CATALINA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:8888"
+      JAVA_OPTS: "
+        -DlocalTransform.acme-alfresco-transformer-engines.url=http://acme-alfresco-transformer-engines:8090/
+        -Drendition.config.dir=shared/classes/alfresco/extension/transform/renditions/
+        "
     ports:
       - "${acs.port}:8080"
       - "${acs.debug.port}:8888"
     volumes:
-      - acs7-first-try-acs-volume:/usr/local/tomcat/alf_data
+      - ../../../volume/alf_data:/usr/local/tomcat/alf_data
+      - ../../../volume/logs:/usr/local/tomcat/logs
+#      - ../../../volume/license:/opt/alfresco/license
+      - ../../../volume/renditions:/usr/local/tomcat/shared/classes/alfresco/extension/transform/renditions
     depends_on:
       - acs7-first-try-postgres
+      - activemq
   acs7-first-try-postgres:
     image: postgres:9.6
     environment:
@@ -34,23 +42,63 @@ services:
       - "${postgres.port}:5432"
     volumes:
       - acs7-first-try-db-volume:/var/lib/postgresql/data
-  acs7-first-try-ass:
-    image: alfresco/alfresco-search-services:1.2.0
-    environment:
-      SOLR_ALFRESCO_HOST: acs7-first-try-acs
-      SOLR_ALFRESCO_PORT: 8080
-      SOLR_SOLR_HOST: acs7-first-try-ass
-      SOLR_SOLR_PORT: 8983
-      SOLR_CREATE_ALFRESCO_DEFAULTS: alfresco,archive
+#  acs7-first-try-ass:
+#    image: alfresco/alfresco-search-services:1.2.0
+#    environment:
+#      SOLR_ALFRESCO_HOST: acs7-first-try-acs
+#      SOLR_ALFRESCO_PORT: 8080
+#      SOLR_SOLR_HOST: acs7-first-try-ass
+#      SOLR_SOLR_PORT: 8983
+#      SOLR_CREATE_ALFRESCO_DEFAULTS: alfresco,archive
+#    ports:
+#      - "8983:8983"
+#    volumes:
+#      - acs7-first-try-ass-volume:/opt/alfresco-search-services/contentstore
+#      - acs7-first-try-ass-volume:/opt/alfresco-search-services/data
+  activemq:
+    image: alfresco/alfresco-activemq:5.16.1
     ports:
-      - "8983:8983"
+      - 8161:8161 # Web Console
+      - 5672:5672 # AMQP
+      - 61616:61616 # OpenWire
+      - 61613:61613 # STOMP
+  acme-alfresco-event-handlers:
+    image: acme/acme-alfresco-event-handlers:latest
+    environment:
+      JAVA_OPTS: "
+                -Dspring.activemq.brokerUrl=tcp://activemq:61616
+                -Dcontent.service.url=http://acs7-first-try-acs:8080
+                -Dcontent.service.security.basicAuth.username=admin
+                -Dcontent.service.security.basicAuth.password=admin
+                "
+  acme-alfresco-transformer-engines:
+    image: acme/acme-alfresco-transformer-engines:latest
+    environment:
+      JAVA_OPTS: " -Xms256m -Xmx256m"
+      ACTIVEMQ_URL: "nio://activemq:61616"
+      ACTIVEMQ_USER: "admin"
+      ACTIVEMQ_PASSWORD: "admin"
+      FILE_STORE_URL: "http://shared-file-store:8099/alfresco/api/-default-/private/sfs/versions/1/file"
+    ports:
+      - 8096:8090
+  shared-file-store:
+    image: quay.io/alfresco/alfresco-shared-file-store:0.13.0
+    environment:
+      JAVA_OPTS: " -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80"
+      scheduler.content.age.millis: 86400000
+      scheduler.cleanup.interval: 86400000
+    ports:
+      - 8099:8099
     volumes:
-      - acs7-first-try-ass-volume:/opt/alfresco-search-services/contentstore
-      - acs7-first-try-ass-volume:/opt/alfresco-search-services/data
+      - ../../../volume/shared-file-store:/tmp/Alfresco/sfs
 volumes:
-  acs7-first-try-acs-volume:
-    external: true
+#  acs7-first-try-acs-volume:
+#    external: true
   acs7-first-try-db-volume:
     external: true
-  acs7-first-try-ass-volume:
-    external: true
+#  acs7-first-try-ass-volume:
+#    external: true
+#  shared-file-store-volume:
+#    driver_opts:
+#      type: tmpfs
+#      device: tmpfs
