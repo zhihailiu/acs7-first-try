@@ -1,0 +1,1 @@
+Place custom rendition definitions here. It will be registered to Alfresco during start.

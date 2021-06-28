@@ -1,0 +1,10 @@
+{
+  "renditions": [
+    {
+      "renditionName": "acmePdf",
+      "targetMediaType": "application/pdf",
+      "options": [
+      ]
+    }
+  ]
+}
